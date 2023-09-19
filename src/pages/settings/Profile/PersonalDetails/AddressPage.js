@@ -1,6 +1,6 @@
 import lodashGet from 'lodash/get';
 import _ from 'underscore';
-import React, {useState, useCallback} from 'react';
+import React, {useState, useCallback, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {View} from 'react-native';
 import {CONST as COMMON_CONST} from 'expensify-common/lib/CONST';
@@ -61,16 +61,31 @@ function updateAddress(values) {
 
 function AddressPage({privatePersonalDetails}) {
     usePrivatePersonalDetails();
+    const address = lodashGet(privatePersonalDetails, 'address') || {};
+
+    const [state, setState] = useState('');
+    const [country, setCountry] = useState('');
+    const [firstStreet, setFirstStreet] = useState('');
+    const [secondStreet, setSecondStreet] = useState('');
+
     const {translate} = useLocalize();
-    const [currentCountry, setCurrentCountry] = useState(PersonalDetails.getCountryISO(lodashGet(privatePersonalDetails, 'address.country')));
-    const isUSAForm = currentCountry === CONST.COUNTRY.US;
-    const zipSampleFormat = lodashGet(CONST.COUNTRY_ZIP_REGEX_DATA, [currentCountry, 'samples'], '');
+
+    const isUSAForm = country === CONST.COUNTRY.US;
+    const zipSampleFormat = lodashGet(CONST.COUNTRY_ZIP_REGEX_DATA, [country, 'samples'], '');
     const zipFormat = translate('common.zipCodeExampleFormat', {zipSampleFormat});
 
-    const address = lodashGet(privatePersonalDetails, 'address') || {};
     const isLoadingPersonalDetails = lodashGet(privatePersonalDetails, 'isLoading', true);
-    const [street1, street2] = (address.street || '').split('\n');
-    const [state, setState] = useState(address.state);
+
+    useEffect(() => {
+        if (isLoadingPersonalDetails === true) return;
+
+        const street = (address.street || '').split('\n');
+
+        setFirstStreet(street[0]);
+        setSecondStreet(street[1]);
+        setState(address.state);
+        setCountry(address.country);
+    }, [address, isLoadingPersonalDetails]);
     /**
      * @param {Function} translate - translate function
      * @param {Boolean} isUSAForm - selected country ISO code is US
@@ -121,7 +136,7 @@ function AddressPage({privatePersonalDetails}) {
             return;
         }
         if (key === 'country') {
-            setCurrentCountry(value);
+            setCountry(value);
             setState('');
             return;
         }
@@ -150,7 +165,7 @@ function AddressPage({privatePersonalDetails}) {
                         <AddressSearch
                             inputID="addressLine1"
                             label={translate('common.addressLine', {lineNumber: 1})}
-                            defaultValue={street1 || ''}
+                            defaultValue={firstStreet}
                             onValueChange={handleAddressChange}
                             renamedInputKeys={{
                                 street: 'addressLine1',
@@ -169,7 +184,7 @@ function AddressPage({privatePersonalDetails}) {
                         label={translate('common.addressLine', {lineNumber: 2})}
                         accessibilityLabel={translate('common.addressLine')}
                         accessibilityRole={CONST.ACCESSIBILITY_ROLE.TEXT}
-                        defaultValue={street2 || ''}
+                        defaultValue={secondStreet}
                         maxLength={CONST.FORM_CHARACTER_LIMIT}
                         spellCheck={false}
                     />
@@ -177,7 +192,7 @@ function AddressPage({privatePersonalDetails}) {
                     <View style={styles.mhn5}>
                         <CountryPicker
                             inputID="country"
-                            defaultValue={currentCountry}
+                            defaultValue={country}
                             onValueChange={handleAddressChange}
                         />
                     </View>

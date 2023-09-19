@@ -579,6 +579,7 @@ export default {
         offline: 'Desconectado',
         syncing: 'Sincronizando',
         profileAvatar: 'Perfil avatar',
+        profilePicture: 'Imagen de perfil'
     },
     loungeAccessPage: {
         loungeAccess: 'Acceso a la sala vip',
